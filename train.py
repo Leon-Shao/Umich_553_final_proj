@@ -51,7 +51,7 @@ if __name__ == "__main__":
         model.train()
         running_loss = 0.0
 
-        for i, (images, trimaps, alphas) in enumerate(train_loader):
+        for images, trimaps, alphas in train_loader:
             images = images.to(device)
             trimaps = trimaps.to(device)
             alphas = alphas.to(device)
@@ -64,4 +64,9 @@ if __name__ == "__main__":
 
             optimizer.step()
             running_loss+=loss.item()
-            
+        epoch_loss =running_loss/len(train_loader)
+        print(f"Epoch {epoch+1}/{num_epochs} - Loss: {epoch_loss:.4f}")
+
+        model.eval()
+        eval_loss=0.0
+
