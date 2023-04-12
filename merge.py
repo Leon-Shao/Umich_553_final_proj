@@ -1,11 +1,13 @@
 import os
 import cv2
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 fg_path = 'Foreground/'
 bg_path = 'Background/'
 gt_path = 'Trimap/'
-output_path = 'Dataset/'
+training_path = 'Training_Dataset/'
+eval_path = "Evaluation_Dataset"
 
 def read_picture_name(path):
     picture_list = os.listdir(path)
@@ -36,15 +38,22 @@ def pic_padding(pic, w, h, x, y):
     im[x:x+pic_h, y:y+pic_w, :] = pic
     return im
 
-if not os.path.exists(output_path):
-    os.makedirs(output_path)
+if not os.path.exists(training_path):
+    os.makedirs(training_path)
+
+if not os.path.exists(eval_path):
+    os.makedirs(eval_path)
 
 fg_list = read_picture_name(fg_path)
 bg_list = read_picture_name(bg_path)
 
+fg_training_list, fg_eval_list = train_test_split(fg_list, test_size=0.1, random_state=25)
+bg_training_list, bg_eval_list = train_test_split(bg_list, test_size=0.1, random_state=25)
+
+
 count = 0
-for fg_name in fg_list:
-    for bg_name in bg_list:
+for fg_name in fg_training_list:
+    for bg_name in bg_training_list:
         fg_pic = os.path.join(fg_path, fg_name)
         bg_pic = os.path.join(bg_path, bg_name)
         tr_pic = os.path.join(gt_path, fg_name)
@@ -56,9 +65,30 @@ for fg_name in fg_list:
             h, w, c = bg.shape
             im, a, fg, bg, gt = composite4(fg, bg, gt, a, w, h)
             pic_name = str(count) + '.png'
-            tri_name = str(count) + '_tri.png'
-            data_path = os.path.join(output_path, pic_name)
-            tri_path = os.path.join(output_path, tri_name)
+            alpha_name = str(count) + '_alpha.png'
+            data_path = os.path.join(training_path, pic_name)
+            alpha_path = os.path.join(training_path, alpha_name)
             cv2.imwrite(data_path, im)
-            cv2.imwrite(tri_path, gt)
+            cv2.imwrite(alpha_path, gt)
+            count += 1
+
+count = 0
+for fg_name in fg_eval_list:
+    for bg_name in bg_eval_list:
+        fg_pic = os.path.join(fg_path, fg_name)
+        bg_pic = os.path.join(bg_path, bg_name)
+        tr_pic = os.path.join(gt_path, fg_name)
+        fg = cv2.imread(fg_pic)
+        bg = cv2.imread(bg_pic)
+        gt = cv2.imread(tr_pic)
+        a = 128
+        if type(bg) != type(None):
+            h, w, c = bg.shape
+            im, a, fg, bg, gt = composite4(fg, bg, gt, a, w, h)
+            pic_name = str(count) + '.png'
+            alpha_name = str(count) + '_alpha.png'
+            data_path = os.path.join(eval_path, pic_name)
+            alpha_path = os.path.join(eval_path, alpha_name)
+            cv2.imwrite(data_path, im)
+            cv2.imwrite(alpha_path, gt)
             count += 1
