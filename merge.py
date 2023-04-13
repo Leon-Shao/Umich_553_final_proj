@@ -99,9 +99,9 @@ for fg_name in fg_eval_list:
             pic_name = str(count) + '.png'
             alpha_name = str(count) + '_alpha.png'
             tri_name = str(count) + '_tri.png'
-            data_path = os.path.join(training_path, pic_name)
-            alpha_path = os.path.join(training_path, alpha_name)
-            trimap_path = os.path.join(training_path, tri_name)
+            data_path = os.path.join(eval_path, pic_name)
+            alpha_path = os.path.join(eval_path, alpha_name)
+            trimap_path = os.path.join(eval_path, tri_name)
             cv2.imwrite(data_path, im)
             cv2.imwrite(alpha_path, gt)
             cv2.imwrite(trimap_path, tri)
