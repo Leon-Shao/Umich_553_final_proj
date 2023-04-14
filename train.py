@@ -22,8 +22,8 @@ class MattingDataset(Dataset):
     
     def __getitem__(self, index):
         img_path = os.path.join(self.img_dir, self.image_files[index])
-        trimap_path = os.path.join(self.trimap_dir, self.trimap_files[index])
-        alpha_path = os.path.join(self.alpha_dir, self.alpha_files[index])
+        trimap_path = os.path.join(self.trimap_dir, self.image_files[index])
+        alpha_path = os.path.join(self.alpha_dir, self.image_files[index])
 
         image = Image.open(img_path).convert('RGB')
         trimap = Image.open(trimap_path).convert('L')
@@ -41,11 +41,8 @@ class MattingDataset(Dataset):
         #     torchvision.transforms.ToTensor()
         # ])
         image = self.transform(image)
-        print(image.size())
         trimap = self.transform(trimap)
-        print(trimap.size())
         alpha = self.transform(alpha)
-        print(alpha.size())
         return image, trimap, alpha
     
 if __name__ == "__main__":
@@ -79,7 +76,7 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()
 
-            outputs = model(torch.cat([images, trimaps], dim=1))
+            outputs = model(torch.cat([images, trimaps], dim=0))
             loss = criterion(outputs, alphas)
             loss.backward()
 
@@ -87,7 +84,7 @@ if __name__ == "__main__":
             running_loss+=loss.item()
         epoch_loss =running_loss/len(train_loader)
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {epoch_loss:.4f}")
-
-        model.eval()
-        eval_loss=0.0
+        
+        # model.eval()
+        # eval_loss=0.0
 

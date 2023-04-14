@@ -8,10 +8,11 @@ bg_path = 'Background/'
 gt_path = 'Alpha/'
 tri_path = 'Trimap/'
 training_path = 'Training_Dataset/'
+eval_path = "Evaluation_Dataset/"
 img_dir = "Image/"
 alpha_dir = "Alpha/"
 trimap_dir = "Trimap/"
-eval_path = "Evaluation_Dataset/"
+
 
 def read_picture_name(path):
     picture_list = os.listdir(path)
@@ -73,8 +74,8 @@ for fg_name in fg_training_list:
             h, w, c = bg.shape
             im, a, fg, bg, gt, tri = composite4(fg, bg, gt, tri, a, w, h)
             pic_name = str(count) + '.png'
-            alpha_name = str(count) + '_alpha.png'
-            tri_name = str(count) + '_tri.png'
+            alpha_name = str(count) + '.png'
+            tri_name = str(count) + '.png'
             data_path = os.path.join(training_path, img_dir , pic_name)
             alpha_path = os.path.join(training_path, alpha_dir, alpha_name)
             trimap_path = os.path.join(training_path,trimap_dir, tri_name)
@@ -104,17 +105,11 @@ for fg_name in fg_eval_list:
             h, w, c = bg.shape
             im, a, fg, bg, gt, tri = composite4(fg, bg, gt, tri, a, w, h)
             pic_name = str(count) + '.png'
-            alpha_name = str(count) + '_alpha.png'
-            tri_name = str(count) + '_tri.png'
-<<<<<<< HEAD
+            alpha_name = str(count) + '.png'
+            tri_name = str(count) + '.png'
             data_path = os.path.join(eval_path, img_dir, pic_name)
             alpha_path = os.path.join(eval_path,alpha_dir,alpha_name)
             trimap_path = os.path.join(eval_path,trimap_dir,tri_name)
-=======
-            data_path = os.path.join(eval_path, pic_name)
-            alpha_path = os.path.join(eval_path, alpha_name)
-            trimap_path = os.path.join(eval_path, tri_name)
->>>>>>> 460ec28f8c5acb02f93ababbb0658a0012979cd2
             cv2.imwrite(data_path, im)
             cv2.imwrite(alpha_path, gt)
             cv2.imwrite(trimap_path, tri)
