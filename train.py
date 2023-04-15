@@ -8,6 +8,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 import torchvision 
+
+from utils import pad_image, my_collate_fn
+
 class MattingDataset(Dataset):
     def __init__(self, img_dir, trimap_dir, alpha_dir, transfrom=ToTensor()):
         self.img_dir = img_dir
@@ -28,6 +31,8 @@ class MattingDataset(Dataset):
         image = Image.open(img_path).convert('RGB')
         trimap = Image.open(trimap_path).convert('L')
         alpha = Image.open(alpha_path).convert('L')
+        #image_rgba = Image.open(img_path).convert('RGB')
+        #image_rgba.putalpha(trimap)
         # transform1 = torchvision.transforms.Compose([
         #     torchvision.transforms.Grayscale(num_output_channels=3),
         #     torchvision.transforms.ToTensor()
@@ -40,10 +45,14 @@ class MattingDataset(Dataset):
         #     torchvision.transforms.Grayscale(num_output_channels=1),
         #     torchvision.transforms.ToTensor()
         # ])
-        image = self.transform(image)
-        trimap = self.transform(trimap)
-        alpha = self.transform(alpha)
+
+        # image = self.transform(image)
+        # trimap = self.transform(trimap)
+        # alpha = self.transform(alpha)
+        
+        #image_rgba = self.transform(image_rgba)
         return image, trimap, alpha
+        #return image_rgba, alpha
     
 if __name__ == "__main__":
     train_img_dir = "Training_Dataset/Image/"
@@ -56,8 +65,8 @@ if __name__ == "__main__":
     train_dataset = MattingDataset(train_img_dir, train_trimap_dir, train_alpha_dir)
     eval_dataset = MattingDataset(eval_img_dir, eval_trimap_dir, eval_alpha_dir)
 
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=4)
-    eval_loader = DataLoader(eval_dataset, batch_size=8, shuffle=True, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=0)
+    eval_loader = DataLoader(eval_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=0)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Matting().to(device)
     criterion = nn.L1Loss()
@@ -73,10 +82,16 @@ if __name__ == "__main__":
             images = images.to(device)
             trimaps = trimaps.to(device)
             alphas = alphas.to(device)
+        # for images_rgba, alphas in train_loader:
+        #     print(images_rgba, alphas)
+        #     images_rgba = images_rgba.to(device)
+        #     alphas = alphas.to(device)
 
             optimizer.zero_grad()
 
-            outputs = model(torch.cat([images, trimaps], dim=0))
+            #outputs = model(torch.cat([images, trimaps], dim=1))
+            outputs = model(torch.cat((images, trimaps), dim=1))
+            #outputs = model(images_rgba)
             loss = criterion(outputs, alphas)
             loss.backward()
 
