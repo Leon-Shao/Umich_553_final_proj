@@ -53,7 +53,16 @@ class MattingDataset(Dataset):
         #image_rgba = self.transform(image_rgba)
         return image, trimap, alpha
         #return image_rgba, alpha
-    
+
+def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss):
+    state = {'epoch': epoch,
+             'epochs_since_improvement': epochs_since_improvement,
+             'loss': loss,
+             'model': model,
+             'optimizer': optimizer}
+    torch.save(state, 'BEST_checkpoint.tar')
+
+
 if __name__ == "__main__":
     train_img_dir = "Training_Dataset/Image/"
     train_trimap_dir = "Training_Dataset/Trimap/"
@@ -65,8 +74,8 @@ if __name__ == "__main__":
     train_dataset = MattingDataset(train_img_dir, train_trimap_dir, train_alpha_dir)
     eval_dataset = MattingDataset(eval_img_dir, eval_trimap_dir, eval_alpha_dir)
 
-    train_loader = DataLoader(train_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=0)
-    eval_loader = DataLoader(eval_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=4)
+    eval_loader = DataLoader(eval_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=4)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Matting().to(device)
     criterion = nn.L1Loss()
@@ -74,6 +83,9 @@ if __name__ == "__main__":
 
     num_epochs = 100
 
+    best_loss = float('inf')
+    epochs_since_improvement = 0
+    
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -100,6 +112,32 @@ if __name__ == "__main__":
         epoch_loss =running_loss/len(train_loader)
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {epoch_loss:.4f}")
         
-        # model.eval()
-        # eval_loss=0.0
+        model.eval()
+        eval_loss=0.0
+        for images, trimaps, alphas in eval_loader:
+            images_eval = images.to(device)
+            trimaps_eval = trimaps.to(device)
+            alphas_eval = alphas.to(device)
+
+            optimizer.zero_grad()
+
+            outputs_eval = model(torch.cat((images_eval, trimaps_eval), dim=1))
+            loss_eval = criterion(outputs_eval, alphas_eval)
+            loss_eval.backward()
+
+            optimizer.step()
+            eval_loss+=loss_eval.item()
+        epoch_loss_eval =eval_loss/len(eval_loader)
+
+        ifbest = epoch_loss_eval < best_loss
+
+        best_loss = min(epoch_loss_eval, best_loss)
+        if not ifbest:
+            epochs_since_improvement += 1
+            print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
+        else:
+            epochs_since_improvement = 0
+            save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss)
+
+        print(f"Epoch eval {epoch+1}/{num_epochs} - Loss: {epoch_loss_eval:.4f}")
 
