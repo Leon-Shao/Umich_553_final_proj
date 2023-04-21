@@ -3,10 +3,10 @@ import cv2
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-fg_path = 'Foreground/'
-bg_path = 'Background/'
-gt_path = 'Alpha/'
-tri_path = 'Trimap/'
+fg_path = 'Foreground_reshape/'
+bg_path = 'Background_reshape/'
+gt_path = 'Alpha_reshape/'
+tri_path = 'Trimap_reshape/'
 training_path = 'Training_Dataset/'
 eval_path = "Evaluation_Dataset/"
 img_dir = "Image/"

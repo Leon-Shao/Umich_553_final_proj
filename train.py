@@ -8,6 +8,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 import torchvision 
+import numpy as np
 
 from utils import pad_image, my_collate_fn
 
@@ -81,15 +82,20 @@ if __name__ == "__main__":
     criterion = nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-    num_epochs = 100
+    num_epochs = 10
 
     best_loss = float('inf')
     epochs_since_improvement = 0
+    epoch_list = []
+    per_epoch_list = []
+    eval_epoch_list = []
+    eval_per_epoch_list = []
     
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
         i = 0
+        per_epoch = []
 
         for images, trimaps, alphas in train_loader:
             i += 1
@@ -123,12 +129,16 @@ if __name__ == "__main__":
             optimizer.step()
             #print(9)
             print(loss.item())
+            per_epoch.append(loss.item())
             running_loss+=loss.item()
         epoch_loss =running_loss/len(train_loader)
+        per_epoch_list.append(per_epoch)
+        epoch_list.append(epoch_loss)
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {epoch_loss:.4f}")
         
         model.eval()
         eval_loss=0.0
+        eval_per_epoch = []
         for images, trimaps, alphas in eval_loader:
             images_eval = images.to(device)
             trimaps_eval = trimaps.to(device)
@@ -142,7 +152,10 @@ if __name__ == "__main__":
 
             optimizer.step()
             eval_loss+=loss_eval.item()
+            eval_per_epoch.append(loss_eval.item())
         epoch_loss_eval =eval_loss/len(eval_loader)
+        eval_per_epoch_list.append(eval_per_epoch)
+        eval_epoch_list.append(epoch_loss_eval)
 
         ifbest = epoch_loss_eval < best_loss
 
@@ -155,4 +168,13 @@ if __name__ == "__main__":
             save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss)
 
         print(f"Epoch eval {epoch+1}/{num_epochs} - Loss: {epoch_loss_eval:.4f}")
+
+    epoch_list = np.array(epoch_list)
+    per_epoch_list = np.array(per_epoch_list)
+    eval_epoch_list = np.array(eval_epoch_list)
+    eval_per_epoch_list = np.array(eval_per_epoch_list)
+    np.save('epoch_list.npy', epoch_list)
+    np.save('per_epoch_list.npy', per_epoch_list)
+    np.save('eval_epoch_list.npy', eval_epoch_list)
+    np.save('eval_per_epoch_list.npy', eval_per_epoch_list)
 
