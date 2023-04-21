@@ -74,8 +74,8 @@ if __name__ == "__main__":
     train_dataset = MattingDataset(train_img_dir, train_trimap_dir, train_alpha_dir)
     eval_dataset = MattingDataset(eval_img_dir, eval_trimap_dir, eval_alpha_dir)
 
-    train_loader = DataLoader(train_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=4)
-    eval_loader = DataLoader(eval_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=True, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=False, num_workers=2)
+    eval_loader = DataLoader(eval_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=False, num_workers=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Matting().to(device)
     criterion = nn.L1Loss()
@@ -89,25 +89,40 @@ if __name__ == "__main__":
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
+        i = 0
 
         for images, trimaps, alphas in train_loader:
+            i += 1
+            print(i)
+            #print(images.shape)
+            #print(alphas.shape)
             images = images.to(device)
+            #print(2)
             trimaps = trimaps.to(device)
+            #print(3)
             alphas = alphas.to(device)
+            #print(4)
         # for images_rgba, alphas in train_loader:
         #     print(images_rgba, alphas)
         #     images_rgba = images_rgba.to(device)
         #     alphas = alphas.to(device)
 
             optimizer.zero_grad()
+            #print(5)
 
             #outputs = model(torch.cat([images, trimaps], dim=1))
             outputs = model(torch.cat((images, trimaps), dim=1))
+            #print(6)
             #outputs = model(images_rgba)
+            print(outputs.shape)
+            print(alphas.shape)
             loss = criterion(outputs, alphas)
+            #print(7)
             loss.backward()
-
+            #print(8)
             optimizer.step()
+            #print(9)
+            print(loss.item())
             running_loss+=loss.item()
         epoch_loss =running_loss/len(train_loader)
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {epoch_loss:.4f}")

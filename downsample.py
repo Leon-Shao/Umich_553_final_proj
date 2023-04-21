@@ -1,7 +1,12 @@
 import cv2 as cv
 import os
 
-path_list = []
+fg_path = 'Foreground'
+bg_path = 'Background'
+gt_path = 'Alpha'
+tri_path = 'Trimap'
+
+path_list = [fg_path, bg_path, gt_path, tri_path]
 
 time = 4
 
@@ -27,3 +32,4 @@ for path in path_list:
             new_pic = downsample(pic, time)
             new_pic_path = os.path.join(new_path, pic_name)
             cv.imwrite(new_pic_path, new_pic)
+            print(1)
