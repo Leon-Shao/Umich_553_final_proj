@@ -11,6 +11,7 @@ import torchvision
 import numpy as np
 from torchvision.transforms import ToPILImage
 
+import matplotlib.pyplot as plt
 
 from utils import pad_image, my_collate_fn
 
@@ -133,11 +134,18 @@ if __name__ == "__main__":
             print(loss.item())
             per_epoch.append(loss.item())
             running_loss+=loss.item()
+            plt.plot(i, running_loss, label = "training loss")
+            plt.xlabel('i')
+            plt.ylabel('loss')
+            plt.title('loss visulization')
+            plt.legend()
+            plt.show()
+
         epoch_loss =running_loss/len(train_loader)
         per_epoch_list.append(per_epoch)
         epoch_list.append(epoch_loss)
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {epoch_loss:.4f}")
-        
+
         model.eval()
         eval_loss=0.0
         eval_per_epoch = []
@@ -172,6 +180,13 @@ if __name__ == "__main__":
             #optimizer.step()
             eval_loss+=loss_eval.item()
             eval_per_epoch.append(loss_eval.item())
+            plt.plot(i, eval_loss, label = "evaluation loss")
+            plt.xlabel('i')
+            plt.ylabel('loss')
+            plt.title('loss visulization')
+            plt.legend()
+            plt.show()
+
         epoch_loss_eval =eval_loss/len(eval_loader)
         eval_per_epoch_list.append(eval_per_epoch)
         eval_epoch_list.append(epoch_loss_eval)
@@ -196,4 +211,3 @@ if __name__ == "__main__":
     np.save('per_epoch_list.npy', per_epoch_list)
     np.save('eval_epoch_list.npy', eval_epoch_list)
     np.save('eval_per_epoch_list.npy', eval_per_epoch_list)
-
