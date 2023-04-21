@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 import torchvision 
 import numpy as np
+from torchvision.transforms import ToPILImage
+
 
 from utils import pad_image, my_collate_fn
 
@@ -139,18 +141,35 @@ if __name__ == "__main__":
         model.eval()
         eval_loss=0.0
         eval_per_epoch = []
-        for images, trimaps, alphas in eval_loader:
+        for i, (images, trimaps, alphas) in enumerate(eval_loader):
+            print("e1")
             images_eval = images.to(device)
             trimaps_eval = trimaps.to(device)
             alphas_eval = alphas.to(device)
+            print(images.shape)
+            print(alphas.shape)
 
-            optimizer.zero_grad()
+            #optimizer.zero_grad()
+            print("e2")
+            with torch.no_grad():
+                outputs_eval = model(torch.cat((images_eval, trimaps_eval), dim=1))
+            print(outputs_eval.shape)
+            print(alphas_eval.shape)
 
-            outputs_eval = model(torch.cat((images_eval, trimaps_eval), dim=1))
+            resized_outputs_eval = []
+            for output in outputs_eval:
+                output_pil = ToPILImage()(output.cpu())
+                resized_output = output_pil.resize(tuple(list(alphas_eval.shape[-2:])[::-1]), Image.BILINEAR)
+                resized_outputs_eval.append(ToTensor()(resized_output))
+            outputs_eval = torch.stack(resized_outputs_eval).to(device)
+
+            print(outputs_eval.shape)
+            print(alphas_eval.shape)
+
             loss_eval = criterion(outputs_eval, alphas_eval)
-            loss_eval.backward()
-
-            optimizer.step()
+            #loss_eval.backward()
+            print("e3")
+            #optimizer.step()
             eval_loss+=loss_eval.item()
             eval_per_epoch.append(loss_eval.item())
         epoch_loss_eval =eval_loss/len(eval_loader)
