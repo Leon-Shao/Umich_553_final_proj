@@ -77,14 +77,14 @@ if __name__ == "__main__":
     train_dataset = MattingDataset(train_img_dir, train_trimap_dir, train_alpha_dir)
     eval_dataset = MattingDataset(eval_img_dir, eval_trimap_dir, eval_alpha_dir)
 
-    train_loader = DataLoader(train_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=False, num_workers=2)
-    eval_loader = DataLoader(eval_dataset, batch_size=8, collate_fn=my_collate_fn, shuffle=False, num_workers=2)
+    train_loader = DataLoader(train_dataset, batch_size=4, collate_fn=my_collate_fn, shuffle=False, num_workers=2)
+    eval_loader = DataLoader(eval_dataset, batch_size=4, collate_fn=my_collate_fn, shuffle=False, num_workers=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Matting().to(device)
     criterion = nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-    num_epochs = 10
+    num_epochs = 2
 
     best_loss = float('inf')
     epochs_since_improvement = 0

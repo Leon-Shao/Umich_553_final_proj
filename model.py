@@ -17,109 +17,58 @@ class Matting(nn.Module):
         
         resnet.conv1 = first_conv_layer
         self.encoder = nn.Sequential(*list(resnet.children())[:-2])
-        # self.encoder = nn.Sequential(
-        # # Encoder layers (VGG-16 without FC layer)
-        # # Feature Extraction
-        #     nn.Conv2d(4, 64, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(64, 64, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.MaxPool2d(kernel_size=2, stride=2),
+        
+        self.up1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.conv1 = nn.Conv2d(512, 512, kernel_size=5, stride=1, padding=2)
+        self.relu1 = nn.ReLU(inplace=True)
+        self.up2 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.conv2 = nn.Conv2d(512, 256, kernel_size=5, stride=1, padding=2)
+        self.relu2 = nn.ReLU(inplace=True)
+        self.up3 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.conv3 = nn.Conv2d(256, 128, kernel_size=5, stride=1, padding=2)
+        self.relu3 = nn.ReLU(inplace=True)
+        self.up4 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.conv4 = nn.Conv2d(128, 64, kernel_size=5, stride=1, padding=2)
+        self.relu4 = nn.ReLU(inplace=True)
+        self.up5 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.conv5 = nn.Conv2d(64, 64, kernel_size=5, stride=1, padding=2)
+        self.relu5 = nn.ReLU(inplace=True)
+        self.conv6 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+        self.sigmoid = nn.Sigmoid()
+        self.up6 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
-        #     nn.Conv2d(64, 128, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(128, 128, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.MaxPool2d(kernel_size=2, stride=2),
+    def decoder(self, z, input_size):
+        z = self.up1(z)
+        z = self.conv1(z)
+        z = self.relu1(z)
+        z = self.up2(z)
+        z = self.conv2(z)
+        z = self.relu2(z)
+        z = self.up3(z)
+        z = self.conv3(z)
+        z = self.relu3(z)
+        z = self.up4(z)
+        z = self.conv4(z)
+        z = self.relu4(z)
+        z = self.up5(z)
+        z = self.conv5(z)
+        z = self.relu5(z)
+        z = self.conv6(z)
+        z = self.sigmoid(z)
 
-        #     nn.Conv2d(128, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(256, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(256, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.MaxPool2d(kernel_size=2, stride=2),
+        # Add adaptive upsampling to match input size
+        z = nn.Upsample(size=(input_size[2], input_size[3]), mode='bilinear', align_corners=True)(z)
 
-        #     nn.Conv2d(256, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        # )
-        # Encoder layers (VGG-16 without FC layer)
-        # Feature Extraction
-        # self.decoder = nn.Sequential(
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(512, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-
-        #     nn.Conv2d(256, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(256, 128, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-
-        #     nn.Conv2d(128, 128, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(128, 64, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-
-        #     nn.Conv2d(64, 64, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(64, 1, kernel_size=3, padding=1),
-        #     nn.Flatten(start_dim=1),
-        #     nn.Sigmoid()
-        # )
-
-        self.decoder = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(512, 512, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True),
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(512, 256, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True),
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(256, 128, kernel_size=5, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(128, 64, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True),
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Conv2d(64, 64, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 1, kernel_size=3, padding=1),
-            nn.Sigmoid()
-        )
+        return z
 
     def forward(self,x):
         z = self.encoder(x)
-        z = self.decoder(z)
+        z = self.decoder(z, x.size())
 
         return z
     
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = Matting().to(device)
 
+    model = Matting().to(device)
     summary(model, (4, 320, 320))
