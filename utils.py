@@ -47,3 +47,9 @@ def my_collate_fn(batch):
 
     return batch_images, batch_trimaps, batch_alpha_mattings
 
+def alpha_prediction_loss(y_pred, y_true):
+    mask = (y_true>0).float()
+    diff = y_pred[:,0,:] - y_true[:,0,:]
+    diff = diff*mask
+    num_pixels = torch.sum(mask)
+    return torch.sum(torch.sqrt(torch.pow(diff,2)+1e-12))/(num_pixels+1e-6)
